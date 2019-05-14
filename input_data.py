@@ -273,7 +273,12 @@ class AudioProcessor(object):
                         ', '.join(all_words.keys()))
     # We need an arbitrary file to load as the input for the silence samples.
     # It's multiplied by zero later, so the content doesn't matter.
-    silence_wav_path = self.data_index['training'][0]['file']
+    # In case several audioprocessors are used there might be no files in training data
+    for mode in self.data_index:
+      if len(self.data_index[mode]) != 0:
+        silence_wav_path = self.data_index[mode][0]['file']
+        break
+
     for set_index in ['validation', 'testing', 'training']:
       set_size = len(self.data_index[set_index])
 
@@ -494,8 +499,11 @@ class AudioProcessor(object):
       if use_background:
         background_index = np.random.randint(len(self.background_data))
         background_samples = self.background_data[background_index]
-        background_offset = np.random.randint(
-            0, len(background_samples) - model_settings['desired_samples'])
+        if len(background_samples) == model_settings['desired_samples']:
+          background_offset = 0
+        else:
+          background_offset = np.random.randint(
+                        0, len(background_samples) - model_settings['desired_samples'])
         background_clipped = background_samples[background_offset:(
             background_offset + desired_samples)]
         background_reshaped = background_clipped.reshape([desired_samples, 1])
