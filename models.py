@@ -40,7 +40,8 @@ from tensorflow.python.ops import variable_scope as vs
 
 def prepare_model_settings(label_count, sample_rate, clip_duration_ms,
                            window_size_ms, window_stride_ms,
-                           dct_coefficient_count):
+                           dct_coefficient_count, lower_frequency_limit=20,
+                           upper_frequency_limit=4000, filterbank_channel_count=40):
   """Calculates common settings needed for all models.
 
   Args:
@@ -50,6 +51,9 @@ def prepare_model_settings(label_count, sample_rate, clip_duration_ms,
     window_size_ms: Duration of frequency analysis window.
     window_stride_ms: How far to move in time between frequency windows.
     dct_coefficient_count: Number of frequency bins to use for analysis.
+    lower_frequency_limit: Lower frequency limit for feature extraction (default 20)
+    lower_frequency_limit: Upper frequency limit for feature extraction (default 4000)
+    filterbank_channel_count: Number of filters in filterbank (default 40)
 
   Returns:
     Dictionary containing common settings.
@@ -63,6 +67,7 @@ def prepare_model_settings(label_count, sample_rate, clip_duration_ms,
   else:
     spectrogram_length = 1 + int(length_minus_window / window_stride_samples)
   fingerprint_size = dct_coefficient_count * spectrogram_length
+
   return {
       'desired_samples': desired_samples,
       'window_size_samples': window_size_samples,
@@ -72,6 +77,9 @@ def prepare_model_settings(label_count, sample_rate, clip_duration_ms,
       'fingerprint_size': fingerprint_size,
       'label_count': label_count,
       'sample_rate': sample_rate,
+      'lower_frequency_limit': lower_frequency_limit,
+      'upper_frequency_limit': upper_frequency_limit,
+      'filterbank_channel_count': filterbank_channel_count
   }
 
 

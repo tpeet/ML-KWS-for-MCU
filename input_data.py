@@ -393,7 +393,11 @@ class AudioProcessor(object):
     self.mfcc_ = contrib_audio.mfcc(
         spectrogram,
         wav_decoder.sample_rate,
-        dct_coefficient_count=model_settings['dct_coefficient_count'])
+        dct_coefficient_count=model_settings['dct_coefficient_count'],
+        upper_frequency_limit=model_settings['upper_frequency_limit'],
+        lower_frequency_limit=model_settings['lower_frequency_limit'],
+        filterbank_channel_count=model_settings['filterbank_channel_count']
+    )
 
   def set_size(self, mode):
     """Calculates the number of samples in the dataset partition.
