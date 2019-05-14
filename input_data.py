@@ -407,7 +407,7 @@ class AudioProcessor(object):
     return len(self.data_index[mode])
 
   def get_data(self, how_many, offset, model_settings, background_frequency,
-               background_volume_range, time_shift, mode, sess):
+               background_volume_range, time_shift, mode, sess, is_bg_volume_constant=False):
     """Gather samples from the data set, applying transformations as needed.
 
     When the mode is 'training', a random selection of samples will be returned,
@@ -426,6 +426,8 @@ class AudioProcessor(object):
       mode: Which partition to use, must be 'training', 'validation', or
         'testing'.
       sess: TensorFlow session that was active when processor was created.
+      is_bg_volume_constant: If True, background_volume_range will be the volume
+        level for each sample, instead of random value chosen within the range
 
     Returns:
       List of sample data for the transformed samples, and list of labels in
@@ -478,7 +480,10 @@ class AudioProcessor(object):
             background_offset + desired_samples)]
         background_reshaped = background_clipped.reshape([desired_samples, 1])
         if np.random.uniform(0, 1) < background_frequency:
-          background_volume = np.random.uniform(0, background_volume_range)
+          if is_bg_volume_constant:
+            background_volume = background_volume_range
+          else:
+            background_volume = np.random.uniform(0, background_volume_range)
         else:
           background_volume = 0
       else:
