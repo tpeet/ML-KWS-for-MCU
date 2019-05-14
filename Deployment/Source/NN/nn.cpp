@@ -14,6 +14,10 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ * ==============================================================================
+ *
+ * Modifications Copyright 2019 Tanel Peet. All rights reserved.
+ * Renamed variables for using multiple feature extraction methods
  */
 
 #include "nn.h"
@@ -29,8 +33,8 @@ int NN::get_frame_shift() {
   return frame_shift;
 }
 
-int NN::get_num_mfcc_features() {
-  return num_mfcc_features;
+int NN::get_num_feature_coeffs() {
+  return num_feature_coeffs;
 }
 
 int NN::get_num_frames() {

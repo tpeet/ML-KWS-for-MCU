@@ -14,11 +14,15 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ * ==============================================================================
+ *
+ * Modifications Copyright 2019 Tanel Peet. All rights reserved.
+ * Allow using and switching between several feature extraction methods
  */
 
 /*
  * Description: Keyword spotting example code using MFCC feature extraction
- * and neural network. 
+ * and neural network.
  */
 
 #include "kws.h"
@@ -29,8 +33,8 @@ KWS::KWS()
 
 KWS::~KWS()
 {
-  delete mfcc;
-  delete mfcc_buffer;
+  delete featureExtractor;
+  delete features_buffer;
   delete output;
   delete predictions;
   delete averaged_output;
@@ -38,14 +42,14 @@ KWS::~KWS()
 
 void KWS::init_kws()
 {
-  num_mfcc_features = nn->get_num_mfcc_features();
+  num_feature_coeffs = nn->get_num_feature_coeffs();
   num_frames = nn->get_num_frames();
   frame_len = nn->get_frame_len();
   frame_shift = nn->get_frame_shift();
-  int mfcc_dec_bits = nn->get_in_dec_bits();
+  int features_dec_bits = nn->get_in_dec_bits();
   num_out_classes = nn->get_num_out_classes();
-  mfcc = new MFCC(num_mfcc_features, frame_len, mfcc_dec_bits);
-  mfcc_buffer = new q7_t[num_frames*num_mfcc_features];
+  featureExtractor = FEATURE_EXTRACTOR_CALL;
+  features_buffer = new q7_t[num_frames*num_feature_coeffs];
   output = new q7_t[num_out_classes];
   averaged_output = new q7_t[num_out_classes];
   predictions = new q7_t[sliding_window_len*num_out_classes];
@@ -53,23 +57,24 @@ void KWS::init_kws()
   audio_buffer_size = audio_block_size + frame_len - frame_shift;
 }
 
-void KWS::extract_features() 
+void KWS::extract_features()
 {
   if(num_frames>recording_win) {
-    //move old features left 
-    memmove(mfcc_buffer,mfcc_buffer+(recording_win*num_mfcc_features),(num_frames-recording_win)*num_mfcc_features);
+    //move old features left
+    memmove(features_buffer,features_buffer+(recording_win*num_feature_coeffs),(num_frames-recording_win)*num_feature_coeffs);
   }
   //compute features only for the newly recorded audio
-  int32_t mfcc_buffer_head = (num_frames-recording_win)*num_mfcc_features; 
+  int32_t features_buffer_head = (num_frames-recording_win)*num_feature_coeffs;
+
   for (uint16_t f = 0; f < recording_win; f++) {
-    mfcc->mfcc_compute(audio_buffer+(f*frame_shift),&mfcc_buffer[mfcc_buffer_head]);
-    mfcc_buffer_head += num_mfcc_features;
+    featureExtractor->compute_features(audio_buffer+(f*frame_shift),&features_buffer[features_buffer_head]);
+    features_buffer_head += num_feature_coeffs;
   }
 }
 
 void KWS::classify()
 {
-  nn->run_nn(mfcc_buffer, output);
+  nn->run_nn(features_buffer, output);
   // Softmax
   arm_softmax_q7(output,num_out_classes,output);
 }

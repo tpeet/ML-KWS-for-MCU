@@ -14,22 +14,20 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * Modifications Copyright 2019 Tanel Peet. All rights reserved.
+ * Added inheritance, so several feature extraction methods could be used
+ * easily
  */
 
 #ifndef __KWS_MFCC_H__
 #define __KWS_MFCC_H__
-
 #include "arm_math.h"
-#include "string.h"
-
-#define SAMP_FREQ 16000
-#define NUM_FBANK_BINS 40
-#define MEL_LOW_FREQ 20
-#define MEL_HIGH_FREQ 4000
+#include "feature_extractor.h"
 
 #define M_2PI 6.283185307179586476925286766559005
 
-class MFCC{
+class MFCC: public FeatureExtractor{
   private:
     int num_mfcc_features;
     int frame_len;
@@ -44,9 +42,9 @@ class MFCC{
     float ** mel_fbank;
     float * dct_matrix;
     arm_rfft_fast_instance_f32 * rfft;
-    float * create_dct_matrix(int32_t input_length, int32_t coefficient_count); 
+    float * create_dct_matrix(int32_t input_length, int32_t coefficient_count);
     float ** create_mel_fbank();
- 
+
     static inline float InverseMelScale(float mel_freq) {
       return 700.0f * (expf (mel_freq / 1127.0f) - 1.0f);
     }
@@ -58,7 +56,7 @@ class MFCC{
   public:
     MFCC(int num_mfcc_features, int frame_len, int mfcc_dec_bits);
     ~MFCC();
-    void mfcc_compute(const int16_t* data, q7_t* mfcc_out);
+    void compute_features(const int16_t* data, q7_t* out_data);
 };
 
 #endif
