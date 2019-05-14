@@ -394,13 +394,13 @@ class AudioProcessor(object):
     background_add = tf.add(background_mul, sliced_foreground)
     background_clamp = tf.clip_by_value(background_add, -1.0, 1.0)
     # Run the spectrogram and MFCC ops to get a 2D 'fingerprint' of the audio.
-    spectrogram = contrib_audio.audio_spectrogram(
+    self.spectrogram_ = contrib_audio.audio_spectrogram(
         background_clamp,
         window_size=model_settings['window_size_samples'],
         stride=model_settings['window_stride_samples'],
         magnitude_squared=True)
     self.mfcc_ = contrib_audio.mfcc(
-        spectrogram,
+        self.spectrogram_,
         wav_decoder.sample_rate,
         dct_coefficient_count=model_settings['dct_coefficient_count'],
         upper_frequency_limit=model_settings['upper_frequency_limit'],
@@ -531,7 +531,7 @@ class AudioProcessor(object):
         data[i - offset, :] = sess.run(self.mfcc_, feed_dict=input_dict).flatten()
       elif feature_extraction == 'gfcc':
         # input to gfcc extraction needs to be integer. We need to multiply by larger number to
-        spec = (sess.run(self.spectrogram_, feed_dict=input_dict) * 1<<15).astype(int)
+        spec = (sess.run(self.spectrogram_, feed_dict=input_dict) * 32768).astype(int)
         gfcc_coeffs_list = []
 
         # Tensorflow's specgrogram creates a list, which has only element in it, containing the whole spectrogram
