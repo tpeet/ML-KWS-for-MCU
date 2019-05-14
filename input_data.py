@@ -46,16 +46,21 @@ BACKGROUND_NOISE_DIR_NAME = '_background_noise_'
 RANDOM_SEED = 59185
 
 
-def prepare_words_list(wanted_words):
+def prepare_words_list(wanted_words, include_silence=True):
   """Prepends common tokens to the custom word list.
 
   Args:
     wanted_words: List of strings containing the custom words.
+    include_silence: Boolean stating whether silence should be added as a separate class.
 
   Returns:
     List with the standard silence and unknown tokens added.
   """
-  return [SILENCE_LABEL, UNKNOWN_WORD_LABEL] + wanted_words
+  if include_silence:
+    return [SILENCE_LABEL, UNKNOWN_WORD_LABEL] + wanted_words
+  else:
+    UNKNOWN_WORD_INDEX = 0
+    return [UNKNOWN_WORD_LABEL] + wanted_words
 
 
 def which_set(filename, validation_percentage, testing_percentage):
@@ -233,7 +238,10 @@ class AudioProcessor(object):
     random.seed(RANDOM_SEED)
     wanted_words_index = {}
     for index, wanted_word in enumerate(wanted_words):
-      wanted_words_index[wanted_word] = index + 2
+      if silence_percentage == 0:
+        wanted_words_index[wanted_word] = index + 1
+      else:
+        wanted_words_index[wanted_word] = index + 2
     self.data_index = {'validation': [], 'testing': [], 'training': []}
     unknown_index = {'validation': [], 'testing': [], 'training': []}
     all_words = {}
@@ -266,12 +274,14 @@ class AudioProcessor(object):
     silence_wav_path = self.data_index['training'][0]['file']
     for set_index in ['validation', 'testing', 'training']:
       set_size = len(self.data_index[set_index])
-      silence_size = int(math.ceil(set_size * silence_percentage / 100))
-      for _ in range(silence_size):
-        self.data_index[set_index].append({
-            'label': SILENCE_LABEL,
-            'file': silence_wav_path
-        })
+
+      if silence_percentage > 0:
+        silence_size = int(math.ceil(set_size * silence_percentage / 100))
+        for _ in range(silence_size):
+          self.data_index[set_index].append({
+              'label': SILENCE_LABEL,
+              'file': silence_wav_path
+          })
       # Pick some unknowns to add to each partition of the data set.
       random.shuffle(unknown_index[set_index])
       unknown_size = int(math.ceil(set_size * unknown_percentage / 100))
@@ -287,7 +297,8 @@ class AudioProcessor(object):
         self.word_to_index[word] = wanted_words_index[word]
       else:
         self.word_to_index[word] = UNKNOWN_WORD_INDEX
-    self.word_to_index[SILENCE_LABEL] = SILENCE_INDEX
+    if silence_percentage > 0:
+      self.word_to_index[SILENCE_LABEL] = SILENCE_INDEX
 
   def prepare_background_data(self):
     """Searches a folder for background noise audio, and loads it into memory.
