@@ -61,7 +61,6 @@ def prepare_words_list(wanted_words, include_silence=True):
   if include_silence:
     return [SILENCE_LABEL, UNKNOWN_WORD_LABEL] + wanted_words
   else:
-    UNKNOWN_WORD_INDEX = 0
     return [UNKNOWN_WORD_LABEL] + wanted_words
 
 
@@ -236,6 +235,9 @@ class AudioProcessor(object):
     Raises:
       Exception: If expected files are not found.
     """
+    if silence_percentage == 0:
+      UNKNOWN_WORD_INDEX = 0
+
     # Make sure the shuffling and picking of unknowns is deterministic.
     random.seed(RANDOM_SEED)
     wanted_words_index = {}
