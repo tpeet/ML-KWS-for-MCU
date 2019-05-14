@@ -37,6 +37,8 @@ from tensorflow.python.ops import io_ops
 from tensorflow.python.platform import gfile
 from tensorflow.python.util import compat
 
+from essentia.standard import GFCC
+
 MAX_NUM_WAVS_PER_CLASS = 2**27 - 1  # ~134M
 SILENCE_LABEL = '_silence_'
 SILENCE_INDEX = 0
@@ -411,7 +413,7 @@ class AudioProcessor(object):
     return len(self.data_index[mode])
 
   def get_data(self, how_many, offset, model_settings, background_frequency,
-               background_volume_range, time_shift, mode, sess, is_bg_volume_constant=False):
+               background_volume_range, time_shift, mode, sess, is_bg_volume_constant=False, feature_extraction='mfcc'):
     """Gather samples from the data set, applying transformations as needed.
 
     When the mode is 'training', a random selection of samples will be returned,
@@ -431,11 +433,15 @@ class AudioProcessor(object):
         'testing'.
       sess: TensorFlow session that was active when processor was created.
       is_bg_volume_constant: If True, background_volume_range will be the volume
-        level for each sample, instead of random value chosen within the range
+        level for each sample, instead of random value chosen within the range (default False)
+      feature_extraction: 'gfcc' or 'mfcc' (default 'mfcc')
 
     Returns:
       List of sample data for the transformed samples, and list of labels in
       one-hot form.
+
+    Raises:
+      Exception:
     """
     # Pick one of the partitions to choose samples from.
     candidates = self.data_index[mode]
@@ -451,6 +457,16 @@ class AudioProcessor(object):
     pick_deterministically = (mode != 'training')
     # Use the processing graph we created earlier to repeatedly to generate the
     # final output sample data we'll use in training.
+    if feature_extraction == 'gfcc':
+      gfcc_maximums = [1288.51391602, 173.28684998, 115.05116272, 113.59124756, 79.25372314]
+      gfcc_minimums = [414.26879883, -192.18196106, -154.86968994, -109.34169006, -101.20419312]
+
+      gfcc = GFCC(sampleRate=model_settings['sample_rate'], highFrequencyBound=model_settings['upper_frequency_limit'],
+                  lowFrequencyBound=model_settings['lower_frequency_limit'],
+                  numberBands=model_settings['filterbank_channel_count'],
+                  type="power", numberCoefficients=model_settings['dct_coefficient_count'],
+                  inputSize=int(model_settings['window_size_samples'] / 2 + 1))
+
     for i in xrange(offset, offset + sample_count):
       # Pick which audio sample to use.
       if how_many == -1 or pick_deterministically:
@@ -501,7 +517,24 @@ class AudioProcessor(object):
       else:
         input_dict[self.foreground_volume_placeholder_] = 1
       # Run the graph to produce the output audio.
-      data[i - offset, :] = sess.run(self.mfcc_, feed_dict=input_dict).flatten()
+      if feature_extraction == 'mfcc':
+        data[i - offset, :] = sess.run(self.mfcc_, feed_dict=input_dict).flatten()
+      elif feature_extraction == 'gfcc':
+        # input to gfcc extraction needs to be integer. We need to multiply by larger number to
+        spec = (sess.run(self.spectrogram_, feed_dict=input_dict) * 1<<15).astype(int)
+        gfcc_coeffs_list = []
+
+        # Tensorflow's specgrogram creates a list, which has only element in it, containing the whole spectrogram
+        for frame in spec[0]:
+          _, gfcc_coeffs = gfcc(frame)
+          # scale each coeff between -1 and 1
+          gfcc_coeffs_list.append(
+            [2 * (x - gfcc_minimums[i]) / (gfcc_maximums[i] - gfcc_minimums[i]) - 1 for i, x in enumerate(gfcc_coeffs)])
+        # if not os.path.exists('spec.pickle'):
+        #    joblib.dump((sample['file'], spec), 'spec.pickle')
+        data[i - offset, :] = np.array(gfcc_coeffs_list).flatten()
+      else:
+        raise Exception("Feature extraction method can be either 'mfcc' or 'gfcc'")
       label_index = self.word_to_index[sample['label']]
       labels[i - offset, label_index] = 1
     return data, labels
