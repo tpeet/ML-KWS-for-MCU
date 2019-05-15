@@ -14,6 +14,11 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ *
+ * Modifications Copyright 2019 Tanel Peet. All rights reserved.
+ *
+ *
  */
 
 /*
@@ -25,9 +30,9 @@
 #include "mfcc.h"
 #include "float.h"
 
-MFCC::MFCC(int num_mfcc_features, int frame_len, int mfcc_dec_bits) 
-:num_mfcc_features(num_mfcc_features), 
- frame_len(frame_len), 
+MFCC::MFCC(int num_mfcc_features, int frame_len, int mfcc_dec_bits)
+:num_mfcc_features(num_mfcc_features),
+ frame_len(frame_len),
  mfcc_dec_bits(mfcc_dec_bits)
 {
 
@@ -47,7 +52,7 @@ MFCC::MFCC(int num_mfcc_features, int frame_len, int mfcc_dec_bits)
   fbank_filter_first = new int32_t[NUM_FBANK_BINS];
   fbank_filter_last = new int32_t[NUM_FBANK_BINS];;
   mel_fbank = create_mel_fbank();
-  
+
   //create DCT matrix
   dct_matrix = create_dct_matrix(NUM_FBANK_BINS, num_mfcc_features);
 
@@ -90,8 +95,8 @@ float ** MFCC::create_mel_fbank() {
 
   int32_t num_fft_bins = frame_len_padded/2;
   float fft_bin_width = ((float)SAMP_FREQ) / frame_len_padded;
-  float mel_low_freq = MelScale(MEL_LOW_FREQ);
-  float mel_high_freq = MelScale(MEL_HIGH_FREQ); 
+  float mel_low_freq = MelScale(LOW_FREQ);
+  float mel_high_freq = MelScale(HIGH_FREQ);
   float mel_freq_delta = (mel_high_freq - mel_low_freq) / (NUM_FBANK_BINS+1);
 
   float *this_bin = new float[num_fft_bins];
@@ -128,7 +133,7 @@ float ** MFCC::create_mel_fbank() {
 
     fbank_filter_first[bin] = first_index;
     fbank_filter_last[bin] = last_index;
-    mel_fbank[bin] = new float[last_index-first_index+1]; 
+    mel_fbank[bin] = new float[last_index-first_index+1];
 
     int32_t j = 0;
     //copy the part we care about
@@ -140,13 +145,12 @@ float ** MFCC::create_mel_fbank() {
   return mel_fbank;
 }
 
-void MFCC::mfcc_compute(const int16_t * audio_data, q7_t* mfcc_out) {
-
+void MFCC::compute_features(const int16_t * audio_data, q7_t* out_data) {
   int32_t i, j, bin;
 
   //TensorFlow way of normalizing .wav data to (-1,1)
   for (i = 0; i < frame_len; i++) {
-    frame[i] = (float)audio_data[i]/(1<<15); 
+	frame[i] = (float)audio_data[i]/(1<<15);
   }
   //Fill up remaining with zeros
   memset(&frame[frame_len], 0, sizeof(float) * (frame_len_padded-frame_len));
@@ -168,8 +172,8 @@ void MFCC::mfcc_compute(const int16_t * audio_data, q7_t* mfcc_out) {
     buffer[i] = real*real + im*im;
   }
   buffer[0] = first_energy;
-  buffer[half_dim] = last_energy;  
- 
+  buffer[half_dim] = last_energy;
+
   float sqrt_data;
   //Apply mel filterbanks
   for (bin = 0; bin < NUM_FBANK_BINS; bin++) {
@@ -201,13 +205,13 @@ void MFCC::mfcc_compute(const int16_t * audio_data, q7_t* mfcc_out) {
 
     //Input is Qx.mfcc_dec_bits (from quantization step)
     sum *= (0x1<<mfcc_dec_bits);
-    sum = round(sum); 
+    sum = round(sum);
     if(sum >= 127)
-      mfcc_out[i] = 127;
+      out_data[i] = 127;
     else if(sum <= -128)
-      mfcc_out[i] = -128;
+      out_data[i] = -128;
     else
-      mfcc_out[i] = sum; 
+      out_data[i] = sum;
   }
 
 }

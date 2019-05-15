@@ -1,3 +1,8 @@
+ /*
+ * Modifications by Tanel Peet 2019.
+ * Bug fix for: https://github.com/ARM-software/ML-KWS-for-MCU/issues/103
+ */
+
 #include "arm_math.h"
 #include "arm_nnfunctions.h"
 
@@ -25,7 +30,7 @@ void arm_avepool_q7_HWC_nonsquare (
   for(i_ch_in=0;i_ch_in<ch_im_in;i_ch_in++) {
     for(i_y=0;i_y<dim_im_out_y;i_y++) {
       for(i_x=0;i_x<dim_im_out_x;i_x++) {
-        int sum = 0;
+        float sum = 0.0;
         int count = 0;
         for (k_y = i_y*stride_y-padding_y; k_y < i_y*stride_y-padding_y+dim_kernel_y; k_y++) {
           for (k_x = i_x*stride_x-padding_x;k_x < i_x*stride_x-padding_x+dim_kernel_x; k_x++) {
@@ -35,7 +40,14 @@ void arm_avepool_q7_HWC_nonsquare (
             }
           }
         }
-        Im_out[i_ch_in+ch_im_in*(i_x+i_y*dim_im_out_x)] = sum*(0x1<<out_lshift)/count;
+        sum = round(sum*(0x1<<out_lshift)/count);
+
+        if(sum >= 127)
+          sum = 127;
+        else if(sum <= -128)
+          sum = -128;
+
+        Im_out[i_ch_in+ch_im_in*(i_x+i_y*dim_im_out_x)] = (int)(sum);
       }
     }
   }

@@ -14,11 +14,14 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ * ==============================================================================
+ *
+ * Modifications Copyright 2019 Tanel Peet. All rights reserved.
+ * Renamed variables for using multiple feature extraction methods
  */
 
 #ifndef __NN_H__
 #define __NN_H__
-
 #include "arm_nnfunctions.h"
 
 class NN {
@@ -26,7 +29,7 @@ class NN {
   public:
     virtual ~NN();
     virtual void run_nn(q7_t* in_data, q7_t* out_data)=0;
-    int get_num_mfcc_features();
+    int get_num_feature_coeffs();
     int get_num_frames();
     int get_frame_len();
     int get_frame_shift();
@@ -36,7 +39,7 @@ class NN {
   protected:
     int frame_len;
     int frame_shift;
-    int num_mfcc_features;
+    int num_feature_coeffs;
     int num_frames;
     int num_out_classes;
     int in_dec_bits;
