@@ -123,8 +123,8 @@ def objective(parameters):
   """Objective function for Gradient Boosting Machine Hyperparameter Optimization"""
 
   pe = helper.ParameterExtractor(parameters)
-  summaries_dir = os.path.join(pe['work_dir'].format(ITERATION), 'retrain_logs')
-  train_dir = os.path.join(pe['work_dir'].format(ITERATION), 'training')
+  summaries_dir = os.path.join(pe.get_param('work_dir').format(ITERATION), 'retrain_logs')
+  train_dir = os.path.join(pe.get_param('work_dir').format(ITERATION), 'training')
   start = timer()
 
   model_size_info = pe.get_model_size_info()

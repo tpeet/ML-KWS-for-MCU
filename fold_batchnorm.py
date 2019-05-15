@@ -31,100 +31,107 @@ import input_data
 
 FLAGS = None
 
+
 def fold_batch_norm(wanted_words, sample_rate, clip_duration_ms,
-                           window_size_ms, window_stride_ms,
-                           dct_coefficient_count, model_architecture, model_size_info):
-  """Creates an audio model with the nodes needed for inference.
+                    window_size_ms, window_stride_ms,
+                    dct_coefficient_count, model_architecture, model_size_info, checkpoint):
+    """Creates an audio model with the nodes needed for inference.
 
-  Uses the supplied arguments to create a model, and inserts the input and
-  output nodes that are needed to use the graph for inference.
+    Uses the supplied arguments to create a model, and inserts the input and
+    output nodes that are needed to use the graph for inference.
 
-  Args:
-    wanted_words: Comma-separated list of the words we're trying to recognize.
-    sample_rate: How many samples per second are in the input audio files.
-    clip_duration_ms: How many samples to analyze for the audio pattern.
-    window_size_ms: Time slice duration to estimate frequencies from.
-    window_stride_ms: How far apart time slices should be.
-    dct_coefficient_count: Number of frequency bands to analyze.
-    model_architecture: Name of the kind of model to generate.
-  """
-  
-  tf.logging.set_verbosity(tf.logging.INFO)
-  sess = tf.InteractiveSession()
-  words_list = input_data.prepare_words_list(wanted_words.split(','))
-  model_settings = models.prepare_model_settings(
-      len(words_list), sample_rate, clip_duration_ms, window_size_ms,
-      window_stride_ms, dct_coefficient_count)
+    Args:
+      wanted_words: Comma-separated list of the words we're trying to recognize.
+      sample_rate: How many samples per second are in the input audio files.
+      clip_duration_ms: How many samples to analyze for the audio pattern.
+      window_size_ms: Time slice duration to estimate frequencies from.
+      window_stride_ms: How far apart time slices should be.
+      dct_coefficient_count: Number of frequency bands to analyze.
+      model_architecture: Name of the kind of model to generate.
+    """
+    tf.reset_default_graph()
+    tf.logging.set_verbosity(tf.logging.INFO)
+    sess = tf.InteractiveSession()
+    words_list = input_data.prepare_words_list(wanted_words.split(','))
+    model_settings = models.prepare_model_settings(
+        len(words_list), sample_rate, clip_duration_ms, window_size_ms,
+        window_stride_ms, dct_coefficient_count)
 
- 
-  fingerprint_input = tf.placeholder(
-      tf.float32, [None, model_settings['fingerprint_size']], name='fingerprint_input')
+    fingerprint_input = tf.placeholder(
+        tf.float32, [None, model_settings['fingerprint_size']], name='fingerprint_input')
 
-  logits = models.create_model(
-      fingerprint_input,
-      model_settings,
-      FLAGS.model_architecture,
-      FLAGS.model_size_info,
-      is_training=False)
+    logits = models.create_model(
+        fingerprint_input,
+        model_settings,
+        model_architecture,
+        model_size_info,
+        is_training=False)
 
-  ground_truth_input = tf.placeholder(
-      tf.float32, [None, model_settings['label_count']], name='groundtruth_input')
+    ground_truth_input = tf.placeholder(
+        tf.float32, [None, model_settings['label_count']], name='groundtruth_input')
 
-  predicted_indices = tf.argmax(logits, 1)
-  expected_indices = tf.argmax(ground_truth_input, 1)
-  correct_prediction = tf.equal(predicted_indices, expected_indices)
-  confusion_matrix = tf.confusion_matrix(expected_indices, predicted_indices)
-  evaluation_step = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+    predicted_indices = tf.argmax(logits, 1)
+    expected_indices = tf.argmax(ground_truth_input, 1)
+    correct_prediction = tf.equal(predicted_indices, expected_indices)
+    confusion_matrix = tf.confusion_matrix(expected_indices, predicted_indices)
+    evaluation_step = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
-  models.load_variables_from_checkpoint(sess, FLAGS.checkpoint)
-  saver = tf.train.Saver(tf.global_variables())
+    models.load_variables_from_checkpoint(sess, checkpoint)
+    saver = tf.train.Saver(tf.global_variables())
 
-  tf.logging.info('Folding batch normalization layer parameters to preceding layer weights/biases')
-  #epsilon added to variance to avoid division by zero
-  epsilon  = 1e-3 #default epsilon for tf.slim.batch_norm 
-  #get batch_norm mean
-  mean_variables = [v for v in tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES) if 'moving_mean' in v.name]
-  for mean_var in mean_variables:
-    mean_name = mean_var.name
-    mean_values = sess.run(mean_var)
-    variance_name = mean_name.replace('moving_mean','moving_variance')
-    variance_var = [v for v in tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES) if v.name == variance_name][0]
-    variance_values = sess.run(variance_var)
-    beta_name = mean_name.replace('moving_mean','beta')
-    beta_var = [v for v in tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES) if v.name == beta_name][0]
-    beta_values = sess.run(beta_var)
-    bias_name = mean_name.replace('batch_norm/moving_mean','biases')
-    bias_var = [v for v in tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES) if v.name == bias_name][0]
-    bias_values = sess.run(bias_var)
-    wt_name = mean_name.replace('batch_norm/moving_mean:0','')
-    wt_var = [v for v in tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES) if (wt_name in v.name and 'weights' in v.name)][0]
-    wt_values = sess.run(wt_var)
-    wt_name = wt_var.name
+    tf.logging.info('Folding batch normalization layer parameters to preceding layer weights/biases')
+    # epsilon added to variance to avoid division by zero
+    epsilon = 1e-3  # default epsilon for tf.slim.batch_norm
+    # get batch_norm mean
+    mean_variables = [v for v in tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES) if 'moving_mean' in v.name]
+    for mean_var in mean_variables:
+        mean_name = mean_var.name
+        mean_values = sess.run(mean_var)
+        variance_name = mean_name.replace('moving_mean', 'moving_variance')
+        variance_var = [v for v in tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES) if v.name == variance_name][0]
+        variance_values = sess.run(variance_var)
+        beta_name = mean_name.replace('moving_mean', 'beta')
+        beta_var = [v for v in tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES) if v.name == beta_name][0]
+        beta_values = sess.run(beta_var)
+        bias_name = mean_name.replace('batch_norm/moving_mean', 'biases')
+        bias_var = [v for v in tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES) if v.name == bias_name][0]
+        bias_values = sess.run(bias_var)
+        wt_name = mean_name.replace('batch_norm/moving_mean:0', '')
+        wt_var = \
+        [v for v in tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES) if (wt_name in v.name and 'weights' in v.name)][0]
+        wt_values = sess.run(wt_var)
+        wt_name = wt_var.name
 
-    #Update weights
-    tf.logging.info('Updating '+wt_name)
-    for l in range(wt_values.shape[3]):
-      for k in range(wt_values.shape[2]):
-        for j in range(wt_values.shape[1]):
-          for i in range(wt_values.shape[0]):
-            if "depthwise" in wt_name: #depthwise batchnorm params are ordered differently
-              wt_values[i][j][k][l] *= 1.0/np.sqrt(variance_values[k]+epsilon) #gamma (scale factor) is 1.0
-            else:
-              wt_values[i][j][k][l] *= 1.0/np.sqrt(variance_values[l]+epsilon) #gamma (scale factor) is 1.0
-    wt_values = sess.run(tf.assign(wt_var,wt_values))
-    #Update biases
-    tf.logging.info('Updating '+bias_name)
-    if "depthwise" in wt_name:
-      depth_dim = wt_values.shape[2]
-    else:
-      depth_dim = wt_values.shape[3]
-    for l in range(depth_dim):
-      bias_values[l] = (1.0*(bias_values[l]-mean_values[l])/np.sqrt(variance_values[l]+epsilon)) + beta_values[l]
-    bias_values = sess.run(tf.assign(bias_var,bias_values))
-    
-  #Write fused weights to ckpt file
-  tf.logging.info('Saving new checkpoint at '+FLAGS.checkpoint+'_bnfused')
-  saver.save(sess, FLAGS.checkpoint+'_bnfused')
+        # Update weights
+        tf.logging.info('Updating ' + wt_name)
+        for l in range(wt_values.shape[3]):
+            for k in range(wt_values.shape[2]):
+                for j in range(wt_values.shape[1]):
+                    for i in range(wt_values.shape[0]):
+                        if "depthwise" in wt_name:  # depthwise batchnorm params are ordered differently
+                            wt_values[i][j][k][l] *= 1.0 / np.sqrt(
+                                variance_values[k] + epsilon)  # gamma (scale factor) is 1.0
+                        else:
+                            wt_values[i][j][k][l] *= 1.0 / np.sqrt(
+                                variance_values[l] + epsilon)  # gamma (scale factor) is 1.0
+        wt_values = sess.run(tf.assign(wt_var, wt_values))
+        # Update biases
+        tf.logging.info('Updating ' + bias_name)
+        if "depthwise" in wt_name:
+            depth_dim = wt_values.shape[2]
+        else:
+            depth_dim = wt_values.shape[3]
+        for l in range(depth_dim):
+            bias_values[l] = (1.0 * (bias_values[l] - mean_values[l]) / np.sqrt(variance_values[l] + epsilon)) + \
+                             beta_values[l]
+        bias_values = sess.run(tf.assign(bias_var, bias_values))
+
+    # Write fused weights to ckpt file
+    tf.logging.info('Saving new checkpoint at ' + checkpoint + '_bnfused')
+    saver.save(sess, checkpoint + '_bnfused')
+    tf.reset_default_graph()
+    sess.close()
+
 
 def main(_):
 
@@ -132,7 +139,7 @@ def main(_):
   fold_batch_norm(FLAGS.wanted_words, FLAGS.sample_rate,
                          FLAGS.clip_duration_ms, FLAGS.window_size_ms,
                          FLAGS.window_stride_ms, FLAGS.dct_coefficient_count,
-                         FLAGS.model_architecture, FLAGS.model_size_info)
+                         FLAGS.model_architecture, FLAGS.model_size_info, FLAGS.checkpoint)
   
 
 if __name__ == '__main__':
