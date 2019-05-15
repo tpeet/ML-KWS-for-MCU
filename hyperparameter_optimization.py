@@ -17,8 +17,8 @@ from timeit import default_timer as timer
 import csv
 import helper
 
-TRIALS_FILE = 'work/trials.csv'
-TRIALS_DIR = 'work/trials/'
+TRIALS_FILE = 'work/trials2.csv'
+TRIALS_DIR = 'work/trials2/'
 
 global ITERATION
 ITERATION = 0
@@ -28,7 +28,11 @@ space = {
   'search_space': {
     'window_size_ms': hp.choice('window_size_ms', [16, 32, 64, 128]),
     'window_stride_coeff': hp.quniform('window_stride_coeff', 0.25, 1, 0.25),
-    'clip_duration_ms': 2000,
+    'feature_extraction': hp.choice('feature_extraction', ['gfcc', 'mfcc']),
+    'lower_frequency': hp.choice('lower_frequency', [0, 1000]),
+    'upper_frequency': hp.choice('upper_frequency', [4000, 8000]),
+    'num_fbank_filters': hp.choice('num_fbank_filters', [6, 10]),
+    'is_bg_volume_constant':  hp.choice('is_bg_volume_constant', [True, False]),
     'model_size_info': hp.choice('model_size_info',
                                  [
                                    {
@@ -89,11 +93,12 @@ space = {
                                  ]),
 
   },
+  'clip_duration_ms': 2000,
   'data_url': '',
   'background_volume': 1,
   'background_frequency': 1,
   'sample_rate': 16000,
-  'eval_step_interval': 2,
+  'eval_step_interval': 100,
   'batch_size': 100,
   'save_step_interval': 100,
   'model_architecture': 'ds_cnn',
@@ -103,17 +108,12 @@ space = {
   'data_dir': '/projects/tanelp/thesis/data/interim/training',
   'valid_dir': '/projects/tanelp/thesis/data/interim/hw_valid',
   'testing_percentage': 0,
-  'validation_percentage': 10,
+  'validation_percentage': 50,
   'unknown_percentage': 100,
   'silence_percentage': 0,
   'time_shift_ms': 100,
-  'work_dir': 'work/HPO-HW_AUDIO-7/DS_CNN{}/',
-  'lower_frequency': 1000,
-  'upper_frequency': 8000,
-  'num_fbank_filters': 10,
-  'is_bg_volume_constant': True,
-  'feature_extraction': 'gfcc',
-  'how_many_training_steps': '3,1,1',
+  'work_dir': 'work/HPO-PROPER/DS_CNN{}/',
+  'how_many_training_steps': '3000,3000,3000',
   'learning_rate': '0.0005,0.0001,0.00002',
   'dct_coefficient_count': 5,
 }

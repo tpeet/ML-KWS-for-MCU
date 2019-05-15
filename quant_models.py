@@ -40,7 +40,8 @@ from tensorflow.python.ops import variable_scope as vs
 
 def prepare_model_settings(label_count, sample_rate, clip_duration_ms,
                            window_size_ms, window_stride_ms,
-                           dct_coefficient_count):
+                           dct_coefficient_count, lower_frequency_limit=20, upper_frequency_limit=4000,
+                           filterbank_channel_count=40):
   """Calculates common settings needed for all models.
 
   Args:
@@ -72,6 +73,9 @@ def prepare_model_settings(label_count, sample_rate, clip_duration_ms,
       'fingerprint_size': fingerprint_size,
       'label_count': label_count,
       'sample_rate': sample_rate,
+      'lower_frequency_limit': lower_frequency_limit,
+      'upper_frequency_limit': upper_frequency_limit,
+      'filterbank_channel_count': filterbank_channel_count,
   }
 
 
