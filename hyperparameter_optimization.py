@@ -15,6 +15,7 @@ import train
 from hyperopt import STATUS_OK, STATUS_FAIL, hp, tpe, fmin, Trials
 from timeit import default_timer as timer
 import csv
+import helper
 
 TRIALS_FILE = 'work/trials.csv'
 TRIALS_DIR = 'work/trials/'
@@ -120,37 +121,16 @@ space = {
 
 def objective(parameters):
   """Objective function for Gradient Boosting Machine Hyperparameter Optimization"""
-  summaries_dir = os.path.join(parameters['work_dir'].format(ITERATION), 'retrain_logs')
-  train_dir = os.path.join(parameters['work_dir'].format(ITERATION), 'training')
+
+  pe = helper.ParameterExtractor(parameters)
+  summaries_dir = os.path.join(pe['work_dir'].format(ITERATION), 'retrain_logs')
+  train_dir = os.path.join(pe['work_dir'].format(ITERATION), 'training')
   start = timer()
 
-  # set parameters
-  num_layers = parameters['search_space']['model_size_info']['num_layers']
-  model_size_info = [num_layers]
-  for i in range(num_layers):
-    layer = parameters['search_space']['model_size_info']['layers'][i]
-    model_size_info.append(int(layer['num_channels']))
-    if 'sx' in layer.keys():
-      model_size_info.append(int(layer['sx']))
-    else:
-      model_size_info.append(3)
+  model_size_info = pe.get_model_size_info()
 
-    if 'sy' in layer.keys():
-      model_size_info.append(int(layer['sx']))
-    else:
-      model_size_info.append(3)
-
-    if i == 0:
-      model_size_info.append(2)
-      model_size_info.append(2)
-    else:
-      model_size_info.append(1)
-      model_size_info.append(1)
-
-
-  window_size_ms = int(parameters['search_space']['window_size_ms'])
-  window_stride_ms = int(parameters['search_space']['window_stride_coeff'] * window_size_ms)
-  clip_duration_ms = int(parameters['search_space']['clip_duration_ms'])
+  window_size_ms = int(pe.get_param('window_size_ms'))
+  window_stride_ms = int(pe.get_param('window_stride_coeff') * window_size_ms)
 
   print()
   print(parameters)
@@ -168,22 +148,27 @@ def objective(parameters):
             'train_time': 0, 'status': STATUS_OK}
 
   best_val_acc, num_params = \
-    train.train(parameters['wanted_words'], parameters['sample_rate'], clip_duration_ms, window_size_ms,
-                window_stride_ms, parameters['time_shift_ms'], parameters['dct_coefficient_count'], parameters['data_url'],
-                parameters['data_dir'], parameters['valid_dir'], parameters['silence_percentage'],
-                parameters['unknown_percentage'], parameters['validation_percentage'], parameters['testing_percentage'],
-                parameters['how_many_training_steps'], parameters['learning_rate'], parameters['model_architecture'], model_size_info,
-                parameters['check_nans'], summaries_dir, train_dir, parameters['start_checkpoint'],
-                parameters['batch_size'], parameters['background_frequency'], parameters['background_volume'],
-                parameters['eval_step_interval'], parameters['lower_frequency'], parameters['upper_frequency'],
-                parameters['num_fbank_filters'], 0, parameters['is_bg_volume_constant'],
-                parameters['feature_extraction'], True)
+    train.train(pe.get_param('wanted_words'), int(pe.get_param('sample_rate')), int(pe.get_param('clip_duration_ms')),
+                window_size_ms, window_stride_ms, int(pe.get_param('time_shift_ms')),
+                int(pe.get_param('dct_coefficient_count')), pe.get_param('data_url'),
+                pe.get_param('data_dir'), pe.get_param('valid_dir'), pe.get_param('silence_percentage'),
+                pe.get_param('unknown_percentage'), pe.get_param('validation_percentage'),
+                pe.get_param('testing_percentage'),pe.get_param('how_many_training_steps'),
+                pe.get_param('learning_rate'), pe.get_param('model_architecture'), model_size_info,
+                pe.get_param('check_nans'), summaries_dir, train_dir, pe.get_param('start_checkpoint'),
+                int(pe.get_param('batch_size')), pe.get_param('background_frequency'),
+                pe.get_param('background_volume'), int(pe.get_param('eval_step_interval')),
+                int(pe.get_param('lower_frequency')), int(pe.get_param('upper_frequency')),
+                int(pe.get_param('num_fbank_filters')), 0, pe.get_param('is_bg_volume_constant'),
+                pe.get_param('feature_extraction'), True)
 
   loss = 1 - best_val_acc
   run_time = timer() - start
 
   with open(TRIALS_FILE, 'a') as f:
     writer = csv.writer(f)
+    parameters['train_dir'] = train_dir
+    parameters['work_dir'] = parameters['work_dir'].format(ITERATION)
     writer.writerow([ITERATION, loss, best_val_acc, run_time, num_params, parameters])
 
   return {'loss': loss, 'parameters': parameters, 'iteration': ITERATION,
