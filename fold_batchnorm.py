@@ -34,7 +34,9 @@ FLAGS = None
 
 def fold_batch_norm(wanted_words, sample_rate, clip_duration_ms,
                     window_size_ms, window_stride_ms,
-                    dct_coefficient_count, model_architecture, model_size_info, checkpoint):
+                    dct_coefficient_count, model_architecture, model_size_info, checkpoint,
+                    include_silence=True, lower_frequency_limit=20, upper_frequency_limit=4000,
+                    filterbank_channel_count=40):
     """Creates an audio model with the nodes needed for inference.
 
     Uses the supplied arguments to create a model, and inserts the input and
@@ -52,10 +54,10 @@ def fold_batch_norm(wanted_words, sample_rate, clip_duration_ms,
     tf.reset_default_graph()
     tf.logging.set_verbosity(tf.logging.INFO)
     sess = tf.InteractiveSession()
-    words_list = input_data.prepare_words_list(wanted_words.split(','))
+    words_list = input_data.prepare_words_list(wanted_words.split(','), include_silence)
     model_settings = models.prepare_model_settings(
         len(words_list), sample_rate, clip_duration_ms, window_size_ms,
-        window_stride_ms, dct_coefficient_count)
+        window_stride_ms, dct_coefficient_count, lower_frequency_limit, upper_frequency_limit, filterbank_channel_count)
 
     fingerprint_input = tf.placeholder(
         tf.float32, [None, model_settings['fingerprint_size']], name='fingerprint_input')

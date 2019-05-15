@@ -120,7 +120,7 @@ def train(wanted_words, sample_rate, clip_duration_ms, window_size_ms, window_st
         unknown_percentage,
         wanted_words.split(','), validation_percentage,
         0, model_settings)
-
+      audio_processor_valid = audio_processor
     else:
       audio_processor = input_data.AudioProcessor(
         data_url, data_dir, silence_percentage,
@@ -265,16 +265,11 @@ def train(wanted_words, sample_rate, clip_duration_ms, window_size_ms, window_st
                          cross_entropy_value))
       is_last_step = (training_step == training_steps_max)
       if (training_step % eval_step_interval) == 0 or is_last_step:
-        set_size = audio_processor.set_size('validation')
+        set_size = audio_processor_valid.set_size('validation')
         total_accuracy = 0
         total_conf_matrix = None
         for i in xrange(0, set_size, batch_size):
-          if valid_dir is None:
-            validation_fingerprints, validation_ground_truth = (
-              audio_processor.get_data(batch_size, i, model_settings, 0.0,
-                                      0.0, 0, 'validation', sess, is_bg_volume_constant, feature_extraction))
-          else:
-            validation_fingerprints, validation_ground_truth = (
+          validation_fingerprints, validation_ground_truth = (
               audio_processor_valid.get_data(batch_size, i, model_settings, 0.0,
                                       0.0, 0, 'validation', sess, is_bg_volume_constant, feature_extraction))
 
