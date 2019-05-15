@@ -174,7 +174,7 @@ def train(wanted_words, sample_rate, clip_duration_ms, window_size_ms, window_st
     # Create the back propagation and training evaluation machinery in the graph.
     with tf.name_scope('cross_entropy'):
       cross_entropy_mean = tf.reduce_mean(
-          tf.nn.softmax_cross_entropy_with_logits(
+          tf.nn.softmax_cross_entropy_with_logits_v2(
               labels=ground_truth_input, logits=logits))
     tf.summary.scalar('cross_entropy', cross_entropy_mean)
 

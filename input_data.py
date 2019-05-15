@@ -235,6 +235,7 @@ class AudioProcessor(object):
     Raises:
       Exception: If expected files are not found.
     """
+    global UNKNOWN_WORD_INDEX
     if silence_percentage == 0:
       UNKNOWN_WORD_INDEX = 0
 
