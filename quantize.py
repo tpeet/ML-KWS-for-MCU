@@ -207,7 +207,7 @@ def run_full_quant_inference(wanted_words, sample_rate, clip_duration_ms,
     fingerprint_input = tf.placeholder(
         tf.float32, [None, fingerprint_size], name='fingerprint_input')
 
-    logits, fingerprints_4d = models.create_model(
+    logits = models.create_model(
         fingerprint_input,
         model_settings,
         model_architecture,
@@ -326,9 +326,7 @@ def run_full_quant_inference(wanted_words, sample_rate, clip_duration_ms,
     output_dec_bits = 7 - np.log2(act_max[len(act_max) - 2])
     with open(ds_cnn_h_fname, 'a') as f:
         f.write("#define AVG_POOL_OUT_LSHIFT {}\n\n".format(int(output_dec_bits - input_dec_bits)))
-        helper.write_ds_cnn_h_end(f, wanted_words, sample_rate, clip_duration_ms,
-                           window_size_ms, window_stride_ms, dct_coefficient_count,
-                           model_architecture, model_size_info, act_max)
+        helper.write_ds_cnn_h_end(f, num_layers)
 
 
     # Evaluate result after quantization on testing set
@@ -380,6 +378,7 @@ def main():
                   'silence_percentage': 0, 'start_checkpoint': '', 'testing_percentage': 0, 'time_shift_ms': 100,
                   'unknown_percentage': 100,
                   'valid_dir': '/projects/tanelp/thesis/data/interim/hw_valid',
+                  'test_dir': '/projects/tanelp/thesis/data/interim/hw_valid',
                   'validation_percentage': 100, 'wanted_words': 'parus_major',
                   'work_dir': 'work/FINAL-VERSION', 'train_dir': 'work/FINAL-VERSION/training'}
     pe = helper.ParameterExtractor(parameters)
@@ -439,9 +438,11 @@ def main():
     print("best_act_max", best_act_max)
 
     run_full_quant_inference(wanted_words, sample_rate, clip_duration_ms,
-                               window_size_ms, window_stride_ms, dct_coefficient_count,
-                               model_architecture, model_size_info, best_act_max, data_url, valid_dir, test_dir, silence_percentage,
-                               unknown_percentage, validation_percentage, testing_percentage, bnfused_checkpoint,
-                               batch_size)
+                             window_size_ms, window_stride_ms, dct_coefficient_count,
+                             model_architecture, model_size_info, best_act_max, data_url, pe.get_param('test_dir'),
+                             silence_percentage, unknown_percentage, 0, 100,
+                             checkpoint, batch_size, lower_frequency_limit,
+                             upper_frequency_limit, filterbank_channel_count, is_bg_volume_constant,
+                             feature_extraction)
 if __name__ == '__main__':
     main()
