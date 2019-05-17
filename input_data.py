@@ -300,7 +300,7 @@ class AudioProcessor(object):
     for set_index in ['validation', 'testing', 'training']:
       random.shuffle(self.data_index[set_index])
     # Prepare the rest of the result data structure.
-    self.words_list = prepare_words_list(wanted_words)
+    self.words_list = prepare_words_list(wanted_words, silence_percentage!=0)
     self.word_to_index = {}
     for word in all_words:
       if word in wanted_words_index:
