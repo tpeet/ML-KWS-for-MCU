@@ -40,8 +40,8 @@ from tensorflow.python.ops import variable_scope as vs
 
 def prepare_model_settings(label_count, sample_rate, clip_duration_ms,
                            window_size_ms, window_stride_ms,
-                           dct_coefficient_count, lower_frequency_limit=20,
-                           upper_frequency_limit=4000, filterbank_channel_count=40):
+                           dct_coefficient_count, lower_frequency_limit,
+                           upper_frequency_limit, filterbank_channel_count):
   """Calculates common settings needed for all models.
 
   Args:

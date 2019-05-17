@@ -48,7 +48,7 @@ BACKGROUND_NOISE_DIR_NAME = '_background_noise_'
 RANDOM_SEED = 59185
 
 
-def prepare_words_list(wanted_words, include_silence=True):
+def prepare_words_list(wanted_words, include_silence):
   """Prepends common tokens to the custom word list.
 
   Args:
@@ -421,7 +421,7 @@ class AudioProcessor(object):
     return len(self.data_index[mode])
 
   def get_data(self, how_many, offset, model_settings, background_frequency,
-               background_volume_range, time_shift, mode, sess, is_bg_volume_constant=False, feature_extraction='mfcc'):
+               background_volume_range, time_shift, mode, sess, is_bg_volume_constant, feature_extraction):
     """Gather samples from the data set, applying transformations as needed.
 
     When the mode is 'training', a random selection of samples will be returned,
