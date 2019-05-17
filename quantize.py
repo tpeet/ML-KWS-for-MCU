@@ -1,11 +1,13 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import helper
 import pandas as pd
 import json
 import os
 import fold_batchnorm
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+
 
 import argparse
 import os.path
@@ -63,7 +65,7 @@ def run_quant_inference(wanted_words, sample_rate, clip_duration_ms,
     fingerprint_input = tf.placeholder(
         tf.float32, [None, fingerprint_size], name='fingerprint_input')
 
-    logits, _ = models.create_model(
+    logits = models.create_model(
         fingerprint_input,
         model_settings,
         model_architecture,
@@ -160,20 +162,25 @@ def get_best_act_max(wanted_words, sample_rate, clip_duration_ms,
 
 def main():
     parameters = {'background_frequency': 1, 'background_volume': 1, 'batch_size': 100, 'check_nans': False,
+                  'clip_duration_ms': 2000,
                   'data_dir': '/projects/tanelp/thesis/data/interim/training', 'data_url': '',
-                  'dct_coefficient_count': 5, 'eval_step_interval': 2, 'feature_extraction': 'gfcc',
-                  'how_many_training_steps': '3,1,1', 'is_bg_volume_constant': True,
-                  'learning_rate': '0.0005,0.0001,0.00002', 'lower_frequency': 1000, 'model_architecture': 'ds_cnn',
-                  'num_fbank_filters': 10, 'sample_rate': 16000, 'save_step_interval': 100,
-                  'search_space': {'clip_duration_ms': 2000, 'model_size_info': {'layers': (
-                      {'num_channels': 16.0, 'sx': 15.0, 'sy': 4.0}, {'num_channels': 16.0}, {'num_channels': 48.0},
-                      {'num_channels': 48.0}, {'num_channels': 48.0}, {'num_channels': 48.0}), 'num_layers': 6},
-                                   'window_size_ms': 128, 'window_stride_coeff': 0.25},
+                  'dct_coefficient_count': 5, 'eval_step_interval': 100, 'how_many_training_steps': '3000,3000,3000',
+                  'learning_rate': '0.0005,0.0001,0.00002', 'model_architecture': 'ds_cnn', 'sample_rate': 16000,
+                  'save_step_interval': 100, 'search_space': {'feature_extraction': 'gfcc',
+                                                              'is_bg_volume_constant': True, 'lower_frequency': 1000,
+                                                              'model_size_info': {'layers': (
+                                                              {'num_channels': 16.0, 'sx': 15.0, 'sy': 2.0},
+                                                              {'num_channels': 16.0}, {'num_channels': 48.0},
+                                                              {'num_channels': 32.0}, {'num_channels': 16.0}),
+                                                                                  'num_layers': 5},
+                                                              'num_fbank_filters': 6,
+                                                              'upper_frequency': 4000, 'window_size_ms': 16,
+                                                              'window_stride_coeff': 0.5},
                   'silence_percentage': 0, 'start_checkpoint': '', 'testing_percentage': 0, 'time_shift_ms': 100,
-                  'unknown_percentage': 100, 'upper_frequency': 8000,
-                  'valid_dir': '/projects/tanelp/thesis/data/interim/hw_valid', 'validation_percentage': 10,
-                  'wanted_words': 'parus_major', 'work_dir': 'work/HPO-HW_AUDIO-7/DS_CNN62/',
-                  'train_dir': 'work/HPO-HW_AUDIO-7/DS_CNN62/training'}
+                  'unknown_percentage': 100,
+                  'valid_dir': '/projects/tanelp/thesis/data/interim/hw_valid',
+                  'validation_percentage': 50, 'wanted_words': 'parus_major',
+                  'work_dir': 'work/HPO-PROPER/DS_CNN2/', 'train_dir': 'work/HPO-PROPER/DS_CNN2/training'}
     pe = helper.ParameterExtractor(parameters)
 
 
@@ -242,3 +249,7 @@ def main():
                        batch_size, include_silence, lower_frequency_limit, upper_frequency_limit,
                        filterbank_channel_count, is_bg_volume_constant, feature_extraction)
     print("best_act_max", best_act_max)
+
+
+if __name__ == '__main__':
+    main()
