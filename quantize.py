@@ -378,7 +378,7 @@ def main():
                   'silence_percentage': 0, 'start_checkpoint': '', 'testing_percentage': 0, 'time_shift_ms': 100,
                   'unknown_percentage': 100,
                   'valid_dir': '/projects/tanelp/thesis/data/interim/hw_valid',
-                  'test_dir': '/projects/tanelp/thesis/data/interim/hw_valid',
+                  'test_dir': '/projects/tanelp/thesis/data/interim/hw_test',
                   'validation_percentage': 100, 'wanted_words': 'parus_major',
                   'work_dir': 'work/FINAL-VERSION', 'train_dir': 'work/FINAL-VERSION/training'}
     pe = helper.ParameterExtractor(parameters)
@@ -441,8 +441,10 @@ def main():
                              window_size_ms, window_stride_ms, dct_coefficient_count,
                              model_architecture, model_size_info, best_act_max, data_url, pe.get_param('test_dir'),
                              silence_percentage, unknown_percentage, 0, 100,
-                             checkpoint, batch_size, lower_frequency_limit,
+                             bnfused_checkpoint, batch_size, lower_frequency_limit,
                              upper_frequency_limit, filterbank_channel_count, is_bg_volume_constant,
                              feature_extraction)
+
+
 if __name__ == '__main__':
     main()

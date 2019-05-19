@@ -209,15 +209,15 @@ def write_ds_cnn_h_beginning(f, wanted_words, sample_rate, clip_duration_ms,
     input_y = spectrogram_length
 
     f.write("#define SAMP_FREQ {}\n".format(sample_rate))
-    f.write("#define MFCC_DEC_BITS {}\n".format(int(7 - np.log2(act_max[0]))))
+    f.write("#define FEATURES_DEC_BITS {}\n".format(int(7 - np.log2(act_max[0]))))
     f.write("#define FRAME_SHIFT_MS {}\n".format(int(window_stride_ms)))
     f.write("#define FRAME_SHIFT ((int16_t)(SAMP_FREQ * 0.001 * FRAME_SHIFT_MS))\n")
     f.write("#define NUM_FRAMES {}\n".format(spectrogram_length))
-    f.write("#define NUM_MFCC_COEFFS {}\n".format(dct_coefficient_count))
+    f.write("#define NUM_FEATURES_COEFFS {}\n".format(dct_coefficient_count))
     f.write("#define FRAME_LEN_MS {}\n".format(int(window_size_ms)))
     f.write("#define FRAME_LEN ((int16_t)(SAMP_FREQ * 0.001 * FRAME_LEN_MS))\n\n")
 
-    f.write("#define IN_DIM (NUM_FRAMES*NUM_MFCC_COEFFS)\n")
+    f.write("#define IN_DIM (NUM_FRAMES*NUM_FEATURES_COEFFS)\n")
     f.write("#define OUT_DIM {}\n\n".format(int(len(wanted_words.split(',')) + 1)))
 
     num_layers = model_size_info[0]
@@ -237,7 +237,7 @@ def write_ds_cnn_h_beginning(f, wanted_words, sample_rate, clip_duration_ms,
         pad_x = max((out_x - 1) * sx + kx - input_x, 0) // 2
         pad_y = max((out_y - 1) * sy + ky - input_y, 0) // 2
         if layer_no == 1:
-            f.write("#define CONV1_IN_X NUM_MFCC_COEFFS\n")
+            f.write("#define CONV1_IN_X NUM_FEATURES_COEFFS\n")
             f.write("#define CONV1_IN_Y NUM_FRAMES\n")
             f.write("#define CONV{}_KX {}\n".format(layer_no, kx))
             f.write("#define CONV{}_KY {}\n".format(layer_no, ky))
@@ -329,10 +329,10 @@ def write_ds_cnn_cpp_file(fname, num_layers):
         f.write("    col_buffer = buffer2 + (CONV2_OUT_CH*CONV2_OUT_X*CONV2_OUT_Y);\n")
         f.write("    frame_len = FRAME_LEN;\n")
         f.write("    frame_shift = FRAME_SHIFT;\n")
-        f.write("    num_mfcc_features = NUM_MFCC_COEFFS;\n")
+        f.write("    num_feature_coeffs = NUM_FEATURES_COEFFS;\n")
         f.write("    num_frames = NUM_FRAMES;\n")
         f.write("    num_out_classes = OUT_DIM;\n")
-        f.write("    in_dec_bits = MFCC_DEC_BITS;\n")
+        f.write("    in_dec_bits = FEATURES_DEC_BITS;\n")
         f.write("}\n\n")
 
         f.write("DS_CNN::~DS_CNN()\n")
