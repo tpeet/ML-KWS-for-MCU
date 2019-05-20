@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+#
+# Modifications Copyright 2019 Tanel Peet. All Rights Reserved.
+# Added GFCCs as features and other small changes
+#
 """Model definitions for simple speech recognition.
 
 """

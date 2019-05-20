@@ -17,6 +17,11 @@
 # Added new model definitions for speech command recognition used in
 # the paper: https://arxiv.org/pdf/1711.07128.pdf
 #
+# ==============================================================================
+#
+# Modifications Copyright 2017 Tanel Peet. All Rights Reserved.
+# Small changes for additional features
+#
 #
 
 """Model definitions for simple speech recognition.

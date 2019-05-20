@@ -1,3 +1,18 @@
+# Copyright 2017 Tanel Peet. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+
 import math
 import cmath
 import numpy as np
@@ -8,7 +23,7 @@ class ParameterExtractor(object):
     def __init__(self, parameters):
         if type(parameters) is dict:
             self.parameters = parameters
-            self.wanted_words = self.get_param(['wanted_words'])
+            self.wanted_words = self.get_param('wanted_words')
             self.sample_rate = int(self.get_param('sample_rate'))
             self.clip_duration_ms = int(self.get_param('clip_duration_ms'))
             self.window_size_ms = int(self.get_param('window_size_ms'))
@@ -30,7 +45,7 @@ class ParameterExtractor(object):
             self.start_checkpoint = self.get_param('start_checkpoint')
             self.batch_size = int(self.get_param('batch_size'))
             self.background_frequency = self.get_param('background_frequency')
-            self.background_frequency = self.get_param('background_volume')
+            self.background_volume = self.get_param('background_volume')
             self.eval_step_interval = int(self.get_param('eval_step_interval'))
             self.lower_frequency = int(self.get_param('lower_frequency'))
             self.upper_frequency = int(self.get_param('upper_frequency'))
@@ -39,6 +54,7 @@ class ParameterExtractor(object):
             self.feature_extraction = self.get_param('feature_extraction')
             self.summaries_dir = os.path.join(self.get_param('work_dir'), 'retrain_logs')
             self.train_dir = os.path.join(self.get_param('work_dir'), 'training')
+            self.include_silence = self.silence_percentage != 0
         elif type(parameters) is str:
             print("Load json file")
         else:
@@ -76,6 +92,7 @@ class ParameterExtractor(object):
             self.feature_extraction = parameters[29]
             self.summaries_dir = os.path.join(self.work_dir, 'retrain_logs')
             self.train_dir = os.path.join(self.work_dir, 'training')
+            self.include_silence = self.silence_percentage != 0
 
 
     def get_param(self, param):

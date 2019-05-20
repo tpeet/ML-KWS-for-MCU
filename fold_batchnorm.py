@@ -17,6 +17,11 @@
 # Adapted from freeze.py to fold the batch norm parameters into preceding layer
 # weights and biases
 #
+# ==============================================================================
+#
+# Modifications Copyright 2019 Tanel Peet. All Rights Reserved.
+# Allow to use fold_batch_norm as a library
+#
 
 from __future__ import absolute_import
 from __future__ import division
