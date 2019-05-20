@@ -1,12 +1,82 @@
 import math
 import cmath
 import numpy as np
-
+import os
 
 
 class ParameterExtractor(object):
     def __init__(self, parameters):
-        self.parameters = parameters
+        if type(parameters) is dict:
+            self.parameters = parameters
+            self.wanted_words = self.get_param(['wanted_words'])
+            self.sample_rate = int(self.get_param('sample_rate'))
+            self.clip_duration_ms = int(self.get_param('clip_duration_ms'))
+            self.window_size_ms = int(self.get_param('window_size_ms'))
+            self.window_stride_ms = int(self.get_param('window_stride_coeff') * self.window_size_ms)
+            self.time_shift_ms = int(self.get_param('time_shift_ms'))
+            self.dct_coefficient_count = int(self.get_param('dct_coefficient_count'))
+            self.data_url = self.get_param('data_url')
+            self.data_dir = self.get_param('data_dir')
+            self.valid_dir = self.get_param('valid_dir')
+            self.silence_percentage = self.get_param('silence_percentage')
+            self.unknown_percentage = self.get_param('unknown_percentage')
+            self.validation_percentage = self.get_param('validation_percentage')
+            self.testing_percentage = self.get_param('testing_percentage')
+            self.how_many_training_steps = self.get_param('how_many_training_steps')
+            self.learning_rate = self.get_param('learning_rate')
+            self.model_architecture = self.get_param('model_architecture')
+            self.model_size_info = self.get_model_size_info()
+            self.check_nans = self.get_param('check_nans')
+            self.start_checkpoint = self.get_param('start_checkpoint')
+            self.batch_size = int(self.get_param('batch_size'))
+            self.background_frequency = self.get_param('background_frequency')
+            self.background_frequency = self.get_param('background_volume')
+            self.eval_step_interval = int(self.get_param('eval_step_interval'))
+            self.lower_frequency = int(self.get_param('lower_frequency'))
+            self.upper_frequency = int(self.get_param('upper_frequency'))
+            self.num_fbank_filters = int(self.get_param('num_fbank_filters'))
+            self.is_bg_volume_constant = self.get_param('is_bg_volume_constant')
+            self.feature_extraction = self.get_param('feature_extraction')
+            self.summaries_dir = os.path.join(self.get_param('work_dir'), 'retrain_logs')
+            self.train_dir = os.path.join(self.get_param('work_dir'), 'training')
+        elif type(parameters) is str:
+            print("Load json file")
+        else:
+            if len(parameters) != 30:
+                raise Exception("Wrong number of arguments for training function")
+            self.wanted_words = parameters[0]
+            self.sample_rate = parameters[1]
+            self.clip_duration_ms = parameters[2]
+            self.window_size_ms = parameters[3]
+            self.window_stride_ms = parameters[4]
+            self.time_shift_ms = parameters[5]
+            self.dct_coefficient_count = parameters[6]
+            self.data_url = parameters[7]
+            self.data_dir = parameters[8]
+            self.valid_dir = parameters[9]
+            self.silence_percentage = parameters[10]
+            self.unknown_percentage = parameters[11]
+            self.validation_percentage = parameters[12]
+            self.testing_percentage = parameters[13]
+            self.how_many_training_steps = parameters[14]
+            self.learning_rate = parameters[15]
+            self.model_architecture = parameters[16]
+            self.model_size_info = parameters[17]
+            self.check_nans = parameters[18]
+            self.summaries_dir = parameters[19]
+            self.work_dir = parameters[20]
+            self.start_checkpoint = parameters[21]
+            self.batch_size = parameters[22]
+            self.background_frequency = parameters[23]
+            self.background_volume = parameters[24]
+            self.eval_step_interval = parameters[25]
+            self.lower_frequency = parameters[26]
+            self.num_fbank_filters = parameters[27]
+            self.is_bg_volume_constant = parameters[28]
+            self.feature_extraction = parameters[29]
+            self.summaries_dir = os.path.join(self.work_dir, 'retrain_logs')
+            self.train_dir = os.path.join(self.work_dir, 'training')
+
 
     def get_param(self, param):
         if param in self.parameters:
@@ -40,7 +110,6 @@ class ParameterExtractor(object):
                 model_size_info.append(1)
                 model_size_info.append(1)
         return model_size_info
-
 
 
 def find_parameter(parameters, parameter):

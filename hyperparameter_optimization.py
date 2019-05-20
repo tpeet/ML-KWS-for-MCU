@@ -159,8 +159,8 @@ def objective(parameters):
                 int(pe.get_param('batch_size')), pe.get_param('background_frequency'),
                 pe.get_param('background_volume'), int(pe.get_param('eval_step_interval')),
                 int(pe.get_param('lower_frequency')), int(pe.get_param('upper_frequency')),
-                int(pe.get_param('num_fbank_filters')), 0, pe.get_param('is_bg_volume_constant'),
-                pe.get_param('feature_extraction'), True)
+                int(pe.get_param('num_fbank_filters')), pe.get_param('is_bg_volume_constant'),
+                pe.get_param('feature_extraction'), True, 0)
 
   loss = 1 - best_val_acc
   run_time = timer() - start

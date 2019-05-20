@@ -96,7 +96,7 @@ def train(wanted_words, sample_rate, clip_duration_ms, window_size_ms, window_st
           validation_percentage, testing_percentage, how_many_training_steps, learning_rate,
           model_architecture, model_size_info, check_nans, summaries_dir, train_dir, start_checkpoint,
           batch_size, background_frequency, background_volume, eval_step_interval, lower_frequency,
-          upper_frequency, num_fbank_filters, verbosity, is_bg_volume_constant, feature_extraction, return_values):
+          upper_frequency, num_fbank_filters,  is_bg_volume_constant, feature_extraction, return_values, verbosity):
   tf.reset_default_graph()
 
   # We want to see all the logging messages for this tutorial.
@@ -504,5 +504,5 @@ if __name__ == '__main__':
         FLAGS.how_many_training_steps, FLAGS.learning_rate, FLAGS.model_architecture, FLAGS.model_size_info,
         FLAGS.check_nans, FLAGS.summaries_dir, FLAGS.train_dir, FLAGS.start_checkpoint, FLAGS.batch_size,
         FLAGS.background_frequency, FLAGS.background_volume, FLAGS.eval_step_interval, FLAGS.lower_frequency,
-        FLAGS.upper_frequency, FLAGS.num_fbank_filters, FLAGS.verbosity, FLAGS.is_bg_volume_constant,
-        FLAGS.feature_extraction, FLAGS.return_values)
+        FLAGS.upper_frequency, FLAGS.num_fbank_filters, FLAGS.is_bg_volume_constant,
+        FLAGS.feature_extraction, FLAGS.return_values, FLAGS.verbosity)
